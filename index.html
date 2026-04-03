@@ -99,9 +99,52 @@ html,body{height:100%;width:100%;overflow:hidden}
 .inv-item{background:rgba(255,255,255,0.04);border-radius:8px;padding:6px;border:1px solid var(--border);display:flex;align-items:center;gap:5px}
 .inv-item-name{font-size:9px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .inv-item-val{font-family:'Orbitron',monospace;font-size:8px;color:var(--mnrl);margin-top:1px}
+/* Loading Screen */
+#loading-screen{position:fixed;inset:0;background:#080d1a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity 0.6s ease}
+#loading-screen.fade-out{opacity:0;pointer-events:none}
+.ls-gem{font-size:60px;animation:ls-pulse 1.3s ease-in-out infinite}
+@keyframes ls-pulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px #4fffb0)}50%{transform:scale(1.15);filter:drop-shadow(0 0 28px #4fffb0)}}
+.ls-title{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:#4fffb0;letter-spacing:3px}
+.ls-sub{font-size:12px;color:rgba(255,255,255,0.35);font-family:'Rajdhani',sans-serif;letter-spacing:1px}
+.ls-bar-w{width:190px;height:4px;background:rgba(79,255,176,0.12);border-radius:4px;overflow:hidden;margin-top:6px}
+.ls-bar{height:100%;background:linear-gradient(90deg,#4fffb0,#00c97a);border-radius:4px;width:0%;transition:width 0.12s linear}
+/* Tutorial */
+#tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:8000;display:flex;align-items:flex-end;justify-content:center;padding-bottom:24px;transition:opacity 0.3s}
+#tutorial-overlay.hidden{display:none}
+#tutorial-card{background:#111d35;border:1px solid rgba(79,255,176,0.3);border-radius:20px;padding:22px 20px 18px;width:calc(100% - 40px);max-width:440px;position:relative;box-shadow:0 0 40px rgba(79,255,176,0.08)}
+.tut-dots{display:flex;gap:7px;justify-content:center;margin-bottom:16px}
+.tut-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);transition:background 0.3s,transform 0.3s}
+.tut-dot.active{background:#4fffb0;transform:scale(1.3)}
+.tut-icon{font-size:40px;text-align:center;margin-bottom:10px}
+.tut-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#4fffb0;text-align:center;margin-bottom:10px;letter-spacing:1px}
+.tut-desc{font-size:13px;color:rgba(255,255,255,0.78);text-align:center;line-height:1.65;font-family:'Rajdhani',sans-serif}
+.tut-btns{display:flex;gap:10px;margin-top:18px}
+.tut-btn{flex:1;padding:11px;border:none;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;-webkit-tap-highlight-color:transparent;letter-spacing:0.5px}
+.tut-btn.primary{background:linear-gradient(135deg,#4fffb0,#00c97a);color:#080d1a}
+.tut-btn.secondary{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.1)}
+#tut-skip{position:absolute;top:14px;right:16px;font-size:11px;color:rgba(255,255,255,0.28);cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:0.5px}
 </style>
 </head>
 <body>
+<div id="loading-screen">
+  <div class="ls-gem">💎</div>
+  <div class="ls-title">GEMSTRIKE</div>
+  <div class="ls-sub">Loading your mine...</div>
+  <div class="ls-bar-w"><div class="ls-bar" id="ls-bar"></div></div>
+</div>
+<div id="tutorial-overlay" class="hidden">
+  <div id="tutorial-card">
+    <span id="tut-skip">SKIP</span>
+    <div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-icon" id="tut-icon"></div>
+    <div class="tut-title" id="tut-title"></div>
+    <div class="tut-desc" id="tut-desc"></div>
+    <div class="tut-btns">
+      <button class="tut-btn secondary" id="tut-prev">← BACK</button>
+      <button class="tut-btn primary" id="tut-next">NEXT →</button>
+    </div>
+  </div>
+</div>
 <div id="gs">
 <div id="hud">
   <div class="hud-pill" id="hp-mnrl">⚡<span id="h-mnrl">0.000</span>$MNRL</div>
@@ -130,12 +173,7 @@ html,body{height:100%;width:100%;overflow:hidden}
       <div class="bubble" id="rb-prestige" style="border-color:rgba(168,85,247,0.35);cursor:pointer">
         <span class="bi">✨</span><div class="bn">Prestige</div><div id="rb-era" class="bv" style="color:#a855f7">ERA 0</div>
       </div>
-      <div class="bubble" id="rb-quests-btn" style="cursor:pointer">
-        <span class="bi">📋</span><div class="bn">Quests</div><div id="rb-q" class="bv">0</div>
-      </div>
-      <div class="bubble" id="rb-shop" style="border-color:rgba(247,201,72,0.35);cursor:pointer">
-        <span class="bi">🏪</span><div class="bn">Shop</div><div class="bv" style="color:var(--coin)">COINS</div>
-      </div>
+
     </div>
     <div id="mine-center">
       <div id="stone-wrap">
@@ -621,8 +659,6 @@ function setupListeners(){
   // Right bubbles
   document.getElementById('rb-inv').addEventListener('click',openInv);
   document.getElementById('rb-prestige').addEventListener('click',function(){switchTab('prestige');});
-  document.getElementById('rb-quests-btn').addEventListener('click',function(){switchTab('quests');});
-  document.getElementById('rb-shop').addEventListener('click',function(){switchTab('shop');});
   // Inventory
   document.getElementById('inv-overlay').addEventListener('click',closeInv);
   document.getElementById('inv-close').addEventListener('click',closeInv);
@@ -636,11 +672,67 @@ function gameLoop(){
   requestAnimationFrame(gameLoop);
 }
 
+// LOADING SCREEN
+function startLoadingScreen(onDone){
+  var bar=document.getElementById('ls-bar');
+  var screen=document.getElementById('loading-screen');
+  var progress=0;
+  var iv=setInterval(function(){
+    progress+=Math.random()*18+6;
+    if(progress>=100){
+      progress=100;
+      clearInterval(iv);
+      bar.style.width='100%';
+      setTimeout(function(){
+        screen.classList.add('fade-out');
+        setTimeout(function(){screen.style.display='none';if(onDone)onDone();},600);
+      },350);
+    }
+    bar.style.width=progress+'%';
+  },80);
+}
+
+// TUTORIAL
+var TUT_STEPS=[
+  {icon:'💎',title:'WELCOME TO GEMSTRIKE',desc:'Mine rare gems, forge powerful gear, and build your mining empire! This quick guide will get you started.'},
+  {icon:'⛏️',title:'START MINING',desc:'Tap the big stone in the center to begin mining! Use the ◀ ▶ arrows to switch between different minerals.'},
+  {icon:'✅',title:'COLLECT RESOURCES',desc:'When a mine finishes, a glowing green bubble appears on the left side. Tap it to collect your resources!'},
+  {icon:'⚡',title:'ENERGY SYSTEM',desc:'Mining costs Energy shown in the top bar. It regenerates over time. Dirt is always free — great for new miners!'},
+  {icon:'🧭',title:'NAVIGATE THE GAME',desc:'Use the tabs at the bottom to visit the Shop, Market, Quests, and your Battle Pass for rewards and upgrades.'},
+  {icon:'🚀',title:'YOU\'RE READY!',desc:'Start with Dirt to earn your first resources, then unlock better minerals as you grow. Good luck out there, miner!'},
+];
+var tutStep=0;
+function renderTutStep(){
+  var s=TUT_STEPS[tutStep];
+  document.getElementById('tut-icon').textContent=s.icon;
+  document.getElementById('tut-title').textContent=s.title;
+  document.getElementById('tut-desc').textContent=s.desc;
+  var dotsEl=document.getElementById('tut-dots');
+  dotsEl.innerHTML='';
+  TUT_STEPS.forEach(function(_,i){var d=document.createElement('div');d.className='tut-dot'+(i===tutStep?' active':'');dotsEl.appendChild(d);});
+  var prev=document.getElementById('tut-prev');
+  prev.style.visibility=tutStep===0?'hidden':'visible';
+  document.getElementById('tut-next').textContent=tutStep===TUT_STEPS.length-1?'START MINING ⛏️':'NEXT →';
+}
+function closeTutorial(){
+  document.getElementById('tutorial-overlay').classList.add('hidden');
+  localStorage.setItem('gs_tut_done','1');
+}
+function setupTutorial(){
+  document.getElementById('tut-prev').addEventListener('click',function(){if(tutStep>0){tutStep--;renderTutStep();}});
+  document.getElementById('tut-next').addEventListener('click',function(){if(tutStep<TUT_STEPS.length-1){tutStep++;renderTutStep();}else closeTutorial();});
+  document.getElementById('tut-skip').addEventListener('click',closeTutorial);
+  if(!localStorage.getItem('gs_tut_done')){
+    setTimeout(function(){document.getElementById('tutorial-overlay').classList.remove('hidden');renderTutStep();},200);
+  }
+}
+
 // START
 loadGame();
 setupListeners();
 switchTab('mine');
 gameLoop();
+startLoadingScreen(setupTutorial);
 </script>
 </body>
 </html>
