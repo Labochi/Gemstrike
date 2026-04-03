@@ -466,8 +466,7 @@ function updateMineView(){
       bub.innerHTML='<span class="bi">'+r.resI+'</span><div class="bn" style="color:#4fffb0">'+r.n+'</div><div class="bt" style="color:#4fffb0">COLLECT</div>';
       var capturedId=r.id;
       // Attach both click and touchend for mobile
-      bub.addEventListener('click',function(e){e.stopPropagation();collectItem(capturedId);});
-      bub.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();collectItem(capturedId);});
+      bub.addEventListener('pointerdown',function(e){e.stopPropagation();collectItem(capturedId);});
       lc.appendChild(bub);
     });
 
