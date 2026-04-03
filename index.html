@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GemStrike</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#080c14;--bg2:#0d1525;--card:#111a2e;--card2:#162038;--border:rgba(255,255,255,0.08);--mnrl:#4fffb0;--gold:#f0c040;--dim:rgba(255,255,255,0.45);--accent:#e94560}
+body{background:#050810;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:0}
+#gs{font-family:'Rajdhani',sans-serif;background:var(--bg);color:#fff;display:flex;flex-direction:column;width:100%;max-width:480px;min-height:100vh;position:relative}
+
+/* HUD */
+#hud{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.5);border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:10}
+#hud-mnrl{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--mnrl)}
+#hud-sub{font-size:10px;color:var(--dim)}
+#chapter-badge{font-size:10px;font-family:'Orbitron',monospace;color:var(--gold);border:1px solid rgba(240,192,64,0.3);border-radius:20px;padding:2px 10px}
+#era-badge{font-size:10px;padding:2px 10px;border-radius:20px;border:1px solid rgba(139,94,60,0.4);color:#c4956a}
+
+/* RESOURCE BAR */
+#res-bar{display:flex;gap:5px;padding:6px 12px;background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+#res-bar::-webkit-scrollbar{display:none}
+.rpill{display:flex;align-items:center;gap:3px;background:var(--card);border-radius:20px;padding:3px 9px;white-space:nowrap;border:1px solid var(--border)}
+.rpill .ri{font-size:13px}
+.rpill .rv{font-size:11px;font-weight:700}
+.rpill .rl{font-size:10px;color:var(--dim)}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;overflow:hidden;flex:1}
+.screen.active{display:flex}
+
+/* MINE */
+#mine-scroll{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.mrow{background:var(--card);border-radius:11px;padding:10px 12px;border:1px solid var(--border);display:flex;align-items:center;gap:9px;transition:border-color 0.2s}
+.mrow.ready{border-color:rgba(79,255,176,0.35)}
+.mrow.mlocked{opacity:0.3}
+.micon{font-size:28px;width:34px;text-align:center;flex-shrink:0}
+.minfo{flex:1;min-width:0}
+.mname{font-size:13px;font-weight:700}
+.mres{font-size:11px;color:var(--dim);margin-top:1px}
+.mtier{font-size:10px;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:3px}
+.mbtn{border:none;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;white-space:nowrap;background:linear-gradient(135deg,#1d9e75,#0f6e56);transition:transform 0.1s}
+.mbtn:active{transform:scale(0.93)}
+.mbtn.cool{background:rgba(255,255,255,0.06);color:var(--dim);cursor:default}
+.mbtn.mlkd{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.2);cursor:default;font-size:10px}
+.tmr{font-family:'Orbitron',monospace;font-size:11px;color:var(--mnrl);margin-bottom:3px;text-align:right}
+.unlk{font-size:10px;color:var(--dim);text-align:right}
+
+/* MINER */
+#miner-area,#forge-area,#market-area,#shop-area,#quests-area,#pass-area{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+.fcard{background:var(--card);border-radius:12px;padding:13px;border:1px solid var(--border)}
+.ftitle{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;letter-spacing:0.5px}
+.fbody{font-size:12px;color:var(--dim);line-height:1.65}
+.slots-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.scard{background:var(--bg2);border-radius:9px;padding:9px;border:1px solid var(--border);cursor:pointer;transition:border-color 0.2s}
+.scard:hover{border-color:rgba(255,255,255,0.18)}
+.scard-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.scard-icon{font-size:18px}
+.scard-lbl{font-size:10px;font-weight:700;color:var(--dim)}
+.scard-empty{font-size:11px;color:rgba(255,255,255,0.18);font-style:italic}
+.scard-eff{font-size:10px;color:var(--dim);margin-top:3px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-box{background:var(--bg2);border-radius:8px;padding:9px;border:1px solid var(--border);text-align:center}
+.stat-lbl{font-size:10px;color:var(--dim)}
+.stat-val{font-size:18px;font-weight:700;color:var(--mnrl);margin-top:2px}
+
+/* FORGE */
+.recipe-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.recipe-row:last-child{border-bottom:none}
+.r-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.r-info{flex:1}
+.r-name{font-weight:700;font-size:13px}
+.r-cost{font-size:11px;color:var(--dim);margin-top:2px}
+.fbtn{border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#1a0a2e;cursor:pointer;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,var(--gold),#c8860b);white-space:nowrap}
+.fbtn:disabled{background:rgba(255,255,255,0.07);color:var(--dim);cursor:not-allowed}
+
+/* MARKET */
+.mkt-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)}
+.mkt-row:last-child{border-bottom:none}
+.mkt-info{flex:1}
+.mkt-name{font-weight:700;font-size:13px}
+.mkt-seller{font-size:10px;color:var(--dim);margin-top:1px}
+.mkt-price{font-family:'Orbitron',monospace;font-size:11px;color:var(--mnrl)}
+.buybtn{background:rgba(79,255,176,0.1);border:1px solid rgba(79,255,176,0.25);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--mnrl);cursor:pointer;font-family:'Rajdhani',sans-serif;margin-left:4px;white-space:nowrap}
+
+/* SHOP */
+.shop-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
+.shop-row:last-child{border-bottom:none}
+.sh-icon{font-size:24px;width:32px;text-align:center;flex-shrink:0}
+.sh-info{flex:1}
+.sh-name{font-weight:700;font-size:13px}
+.sh-desc{font-size:11px;color:var(--dim);margin-top:2px}
+.sh-price{font-size:12px;font-weight:700;color:var(--gold)}
+.starbtn{border:none;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700;color:#1a0a2e;cursor:pointer;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#f7c948,#e09020);margin-left:4px;white-space:nowrap}
+.nft-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
+.nft-row:last-child{border-bottom:none}
+.nft-info{flex:1}
+.nft-name{font-weight:700;font-size:13px}
+.nft-cost{font-size:11px;color:var(--dim);margin-top:2px}
+.nft-sup{font-size:10px;color:var(--gold);margin-top:2px}
+.mintbtn{border:none;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#a855f7,#7c3aed);white-space:nowrap}
+
+/* QUESTS */
+.qrow{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
+.qrow:last-child{border-bottom:none}
+.q-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0;margin-top:1px}
+.q-info{flex:1}
+.q-name{font-weight:700;font-size:13px}
+.q-desc{font-size:11px;color:var(--dim);margin-top:2px}
+.q-bar-bg{height:4px;background:rgba(255,255,255,0.08);border-radius:4px;margin-top:6px;overflow:hidden}
+.q-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--mnrl),#00aaff);transition:width 0.3s}
+.q-prog{font-size:10px;color:var(--dim);margin-top:3px}
+.q-reward{font-size:11px;color:var(--gold);text-align:right;flex-shrink:0}
+.claimbtn{display:block;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;color:#1a0a2e;cursor:pointer;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,var(--gold),#c8860b);margin-top:5px;white-space:nowrap}
+
+/* PASS */
+.pass-head{background:linear-gradient(135deg,#1a1a4e,#2d1b69);border-radius:12px;padding:16px;border:1px solid rgba(168,85,247,0.3);text-align:center}
+.pass-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:var(--gold)}
+.pass-sub{font-size:11px;color:var(--dim);margin-top:4px}
+.tracks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.track{background:var(--card);border-radius:10px;border:1px solid var(--border);overflow:hidden}
+.track.prem{border-color:rgba(240,192,64,0.4)}
+.track-hd{padding:8px 11px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;background:rgba(0,0,0,0.3)}
+.track.prem .track-hd{color:var(--gold)}
+.track-rws{padding:7px 11px}
+.trw{font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.trw:last-child{border-bottom:none}
+.trw-t{color:var(--dim);font-size:10px}
+.upgbtn{width:100%;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:11px;padding:13px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:transform 0.1s}
+.upgbtn:active{transform:scale(0.98)}
+.prestige-btn{width:100%;margin-top:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px;font-family:'Orbitron',monospace;font-size:11px;color:var(--dim);cursor:not-allowed}
+.prestige-btn.unlocked{background:linear-gradient(135deg,#0d1525,#1a1a4e);border-color:rgba(0,234,255,0.4);color:#00eaff;cursor:pointer}
+
+/* NAV */
+#nav{display:flex;background:rgba(0,0,0,0.6);border-top:1px solid var(--border);flex-shrink:0;position:sticky;bottom:0}
+.nbtn{flex:1;padding:8px 2px 6px;text-align:center;cursor:pointer;border-top:2px solid transparent;transition:all 0.2s;min-width:0}
+.nbtn.active{border-top-color:var(--mnrl)}
+.ni{font-size:17px;display:block;margin-bottom:1px}
+.nl{font-size:8px;font-weight:700;color:var(--dim);display:block}
+.nbtn.active .nl{color:var(--mnrl)}
+
+/* TOAST */
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid rgba(79,255,176,0.4);border-radius:11px;padding:7px 16px;font-size:12px;color:var(--mnrl);opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;z-index:200;font-family:'Orbitron',monospace}
+#toast.show{opacity:1}
+
+/* FLOAT */
+.fl{position:fixed;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;pointer-events:none;animation:fu 0.9s ease-out forwards;z-index:150;text-shadow:0 0 8px currentColor}
+@keyframes fu{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-55px)}}
+
+/* SCROLLBARS */
+.screen *::-webkit-scrollbar{width:2px}
+.screen *::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="gs">
+
+<!-- HUD -->
+<div id="hud">
+  <div>
+    <div id="hud-mnrl">0.000 $MNRL</div>
+    <div id="hud-sub">balance</div>
+  </div>
+  <div style="text-align:center">
+    <div id="chapter-badge">CH.1 · THE FIRST STRIKE</div>
+  </div>
+  <div style="text-align:right">
+    <div id="era-badge">🪨 STONE ERA</div>
+  </div>
+</div>
+
+<!-- RESOURCE BAR -->
+<div id="res-bar">
+  <div class="rpill"><span class="ri">🟤</span><span class="rv" id="r-dust">0</span><span class="rl">Dust</span></div>
+  <div class="rpill"><span class="ri">🔩</span><span class="rv" id="r-ore">0</span><span class="rl">Ore shards</span></div>
+  <div class="rpill"><span class="ri">💎</span><span class="rv" id="r-gem">0</span><span class="rl">Gem frags</span></div>
+  <div class="rpill"><span class="ri">🌌</span><span class="rv" id="r-cos">0</span><span class="rl">Cosmic Ess.</span></div>
+</div>
+
+<!-- MINE SCREEN -->
+<div id="screen-mine" class="screen active">
+  <div id="mine-scroll"></div>
+</div>
+
+<!-- MINER SCREEN -->
+<div id="screen-miner" class="screen">
+  <div id="miner-area">
+    <div class="fcard" style="text-align:center;padding:20px 13px">
+      <div style="font-size:70px;line-height:1">🧑‍⚒️</div>
+      <div style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--mnrl);margin-top:8px">MINER #001</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:4px">Stone Era · No NFTs equipped</div>
+      <div style="display:inline-flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:center">
+        <span style="font-size:11px;background:rgba(79,255,176,0.08);border:1px solid rgba(79,255,176,0.2);border-radius:20px;padding:2px 10px;color:var(--mnrl)">0% cooldown bonus</span>
+        <span style="font-size:11px;background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.2);border-radius:20px;padding:2px 10px;color:var(--gold)">+0% yield</span>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">EQUIPMENT SLOTS</div>
+      <div class="slots-grid" id="slots-grid"></div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">MINER STATS</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-lbl">Cooldown reduction</div><div class="stat-val">−0%</div></div>
+        <div class="stat-box"><div class="stat-lbl">Resource yield</div><div class="stat-val">+0%</div></div>
+        <div class="stat-box"><div class="stat-lbl">XP bonus</div><div class="stat-val">+0%</div></div>
+        <div class="stat-box"><div class="stat-lbl">Market tax</div><div class="stat-val" style="color:var(--gold)">5.0%</div></div>
+        <div class="stat-box"><div class="stat-lbl">Forge speed</div><div class="stat-val">+0%</div></div>
+        <div class="stat-box"><div class="stat-lbl">Active miners</div><div class="stat-val">1</div></div>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">ADDITIONAL MINERS</div>
+      <div class="fbody">Future miners can be added as NFTs. Each extra miner grants a passive 2% cooldown reduction on all minerals and carries its own independent gear slots.</div>
+      <div style="margin-top:8px;font-size:11px;color:rgba(168,85,247,0.8);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:7px 10px;background:rgba(168,85,247,0.06)">🔒 Additional Miners — Coming in a future chapter</div>
+    </div>
+  </div>
+</div>
+
+<!-- FORGE SCREEN -->
+<div id="screen-forge" class="screen">
+  <div id="forge-area">
+    <div class="fcard">
+      <div class="ftitle">⚒️ THE FORGE</div>
+      <div class="fbody">Combine raw resources to craft gear and rare items. Crafted items can be sold on the marketplace for $MNRL. This is one of your primary ways to earn $MNRL.</div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">RECIPES — CHAPTER 1</div>
+      <div id="forge-list"></div>
+    </div>
+    <div class="fcard" style="border-color:rgba(168,85,247,0.2)">
+      <div class="ftitle" style="color:rgba(168,85,247,0.8)">ADVANCED RECIPES</div>
+      <div class="fbody">More recipes unlock as you progress through tiers and acquire blueprints from quests. Blueprint drops are rare — check the Quests tab.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MARKET SCREEN -->
+<div id="screen-market" class="screen">
+  <div id="market-area">
+    <div class="fcard">
+      <div class="ftitle">🛒 MARKETPLACE</div>
+      <div class="fbody">Player-to-player trading. A 5% tax is applied on every sale and goes to the community reward pool. Miner's Pass holders pay only 1.5%.</div>
+      <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">
+        <div style="font-size:11px;background:rgba(79,255,176,0.07);border:1px solid rgba(79,255,176,0.2);border-radius:8px;padding:5px 10px;color:var(--mnrl)">Community pool: <span id="pool-val">0.000</span> $MNRL</div>
+        <div style="font-size:11px;background:rgba(240,192,64,0.07);border:1px solid rgba(240,192,64,0.2);border-radius:8px;padding:5px 10px;color:var(--gold)">Your tax rate: 5%</div>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">TRADEABLE ITEMS</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:10px;background:rgba(79,255,176,0.1);border:1px solid rgba(79,255,176,0.2);border-radius:20px;padding:2px 8px;color:var(--mnrl)">✅ Ore shards</span>
+        <span style="font-size:10px;background:rgba(79,255,176,0.1);border:1px solid rgba(79,255,176,0.2);border-radius:20px;padding:2px 8px;color:var(--mnrl)">✅ Gem fragments</span>
+        <span style="font-size:10px;background:rgba(79,255,176,0.1);border:1px solid rgba(79,255,176,0.2);border-radius:20px;padding:2px 8px;color:var(--mnrl)">✅ Crafted items</span>
+        <span style="font-size:10px;background:rgba(79,255,176,0.1);border:1px solid rgba(79,255,176,0.2);border-radius:20px;padding:2px 8px;color:var(--mnrl)">✅ NFT gear</span>
+        <span style="font-size:10px;background:rgba(233,69,96,0.1);border:1px solid rgba(233,69,96,0.2);border-radius:20px;padding:2px 8px;color:var(--accent)">❌ Raw minerals</span>
+        <span style="font-size:10px;background:rgba(233,69,96,0.1);border:1px solid rgba(233,69,96,0.2);border-radius:20px;padding:2px 8px;color:var(--accent)">❌ Dust</span>
+        <span style="font-size:10px;background:rgba(233,69,96,0.1);border:1px solid rgba(233,69,96,0.2);border-radius:20px;padding:2px 8px;color:var(--accent)">❌ Cosmic Essence</span>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">LIVE LISTINGS</div>
+      <div id="mkt-list"></div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">LIST AN ITEM</div>
+      <div class="fbody">Listing your own items for sale is coming in the next build. You'll be able to set your price and list any tradeable item directly from your inventory.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SHOP SCREEN -->
+<div id="screen-shop" class="screen">
+  <div id="shop-area">
+    <div class="fcard">
+      <div class="ftitle">🏪 GEMSTRIKE SHOP</div>
+      <div class="fbody">Buy boosts and convenience items using Telegram Stars ⭐. This shop uses local currency — no $MNRL required. NFTs are available via the Mint Station below.</div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">BOOST ITEMS</div>
+      <div id="boost-list"></div>
+    </div>
+    <div class="fcard" style="border-color:rgba(168,85,247,0.3)">
+      <div class="ftitle" style="color:#c084fc">💎 NFT MINT STATION · CHAPTER 1</div>
+      <div class="fbody" style="margin-bottom:8px">Limited supply per chapter. Once Chapter 1 ends, these NFTs are only available via player resale on the marketplace. Minting requires in-game resources.</div>
+      <div id="nft-list"></div>
+    </div>
+    <div class="fcard" style="border-color:rgba(240,192,64,0.2)">
+      <div class="ftitle">🔨 AUCTION HOUSE</div>
+      <div class="fbody">Rare and Legendary NFTs are auctioned directly by the creator. Place bids using $MNRL. Highest bidder wins. Coming with Chapter 2.</div>
+    </div>
+  </div>
+</div>
+
+<!-- QUESTS SCREEN -->
+<div id="screen-quests" class="screen">
+  <div id="quests-area">
+    <div class="fcard">
+      <div class="ftitle">📋 QUESTS</div>
+      <div class="fbody">Complete mining, crafting and trading milestones to earn $MNRL and rare blueprints. Daily quests reset every 24 hours. Weekly quests reset on Monday.</div>
+    </div>
+    <div class="fcard">
+      <div class="ftitle">ACTIVE QUESTS</div>
+      <div id="quest-list"></div>
+    </div>
+    <div class="fcard" style="border-color:rgba(240,192,64,0.2)">
+      <div class="ftitle">⭐ PREMIUM QUESTS</div>
+      <div class="fbody">Miner's Pass Premium holders get 3 exclusive quests per season with higher $MNRL rewards and guaranteed blueprint drops. Upgrade in the Pass tab.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PASS SCREEN -->
+<div id="screen-pass" class="screen">
+  <div id="pass-area">
+    <div class="pass-head">
+      <div class="pass-title">⭐ MINER'S PASS</div>
+      <div class="pass-sub">Season 1 · Chapter 1 · The First Strike · 60 days remaining</div>
+    </div>
+    <div class="tracks">
+      <div class="track">
+        <div class="track-hd">FREE TRACK</div>
+        <div class="track-rws">
+          <div class="trw"><span class="trw-t">T1–5</span><span>Dust ×500</span></div>
+          <div class="trw"><span class="trw-t">T6–10</span><span>Ore shards ×50</span></div>
+          <div class="trw"><span class="trw-t">T11–20</span><span>Blueprints</span></div>
+          <div class="trw"><span class="trw-t">T21–30</span><span>$MNRL ×100</span></div>
+        </div>
+      </div>
+      <div class="track prem">
+        <div class="track-hd">⭐ PREMIUM</div>
+        <div class="track-rws">
+          <div class="trw"><span class="trw-t">All free</span><span>+ included</span></div>
+          <div class="trw"><span class="trw-t">Quests</span><span>+3 exclusive</span></div>
+          <div class="trw"><span class="trw-t">Tax</span><span>1.5% only</span></div>
+          <div class="trw"><span class="trw-t">Cosmetic</span><span>Excl. skin</span></div>
+          <div class="trw"><span class="trw-t">Quest slots</span><span>+2 active</span></div>
+          <div class="trw"><span class="trw-t">Auction</span><span>Priority access</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="upgbtn" onclick="toast('⭐ Miner\'s Pass — Telegram Stars payment (coming soon)')">⭐ UPGRADE TO PREMIUM — 499 Stars</button>
+    <div class="fcard">
+      <div class="ftitle">✨ PRESTIGE — MINING ERAS</div>
+      <div class="fbody">Spend Cosmic Essence to enter a new era. Your minerals, resources, structures and forge reset. You keep your $MNRL balance, Pass progress, and all NFTs.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px">
+        <div style="background:rgba(139,94,60,0.1);border:1px solid rgba(139,94,60,0.3);border-radius:8px;padding:8px">
+          <div style="font-size:11px;font-weight:700;color:#c4956a">🪨 Stone Era</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">Starting era — base stats</div>
+          <div style="font-size:10px;color:var(--mnrl);margin-top:2px">Active ✓</div>
+        </div>
+        <div style="background:rgba(184,115,51,0.08);border:1px solid rgba(184,115,51,0.2);border-radius:8px;padding:8px;opacity:0.6">
+          <div style="font-size:11px;font-weight:700;color:#B87333">🔥 Iron Era</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">500 Cosmic Ess.</div>
+          <div style="font-size:10px;color:var(--gold);margin-top:2px">+25% yield · 500 $MNRL</div>
+        </div>
+        <div style="background:rgba(41,128,185,0.08);border:1px solid rgba(41,128,185,0.15);border-radius:8px;padding:8px;opacity:0.5">
+          <div style="font-size:11px;font-weight:700;color:#76D7EA">💎 Crystal Era</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">2,000 Cosmic Ess.</div>
+          <div style="font-size:10px;color:var(--gold);margin-top:2px">+60% yield · 2,000 $MNRL</div>
+        </div>
+        <div style="background:rgba(0,234,255,0.05);border:1px solid rgba(0,234,255,0.12);border-radius:8px;padding:8px;opacity:0.4">
+          <div style="font-size:11px;font-weight:700;color:#00eaff">🌌 Cosmic Era</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">10,000 Cosmic Ess.</div>
+          <div style="font-size:10px;color:var(--gold);margin-top:2px">+150% yield · 10,000 $MNRL</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--dim)">Cosmic Essence: <span id="cos-count" style="color:#00eaff;font-weight:700">0</span> / 500 needed for Iron Era</div>
+      <button class="prestige-btn" id="prestige-btn" onclick="doPrestige()">🔒 PRESTIGE TO IRON ERA — NEED 500 COSMIC ESSENCE</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <div class="nbtn active" onclick="go('mine',this)"><span class="ni">⛏️</span><span class="nl">MINE</span></div>
+  <div class="nbtn" onclick="go('miner',this)"><span class="ni">🧑‍⚒️</span><span class="nl">MINER</span></div>
+  <div class="nbtn" onclick="go('forge',this)"><span class="ni">⚒️</span><span class="nl">FORGE</span></div>
+  <div class="nbtn" onclick="go('market',this)"><span class="ni">🛒</span><span class="nl">MARKET</span></div>
+  <div class="nbtn" onclick="go('shop',this)"><span class="ni">🏪</span><span class="nl">SHOP</span></div>
+  <div class="nbtn" onclick="go('quests',this)"><span class="ni">📋</span><span class="nl">QUESTS</span></div>
+  <div class="nbtn" onclick="go('pass',this)"><span class="ni">⭐</span><span class="nl">PASS</span></div>
+</div>
+
+<div id="toast"></div>
+</div>
+
+<script>
+const MINS=[
+  {n:'Dirt',i:'🟫',t:'T1',tc:'#8B5E3C',r:'dust',ra:1,tm:3,u:0},
+  {n:'Gravel',i:'🪨',t:'T1',tc:'#9E9E9E',r:'dust',ra:2,tm:6,u:8},
+  {n:'Sand',i:'🟡',t:'T1',tc:'#C8A84B',r:'dust',ra:3,tm:9,u:20},
+  {n:'Limestone',i:'⬜',t:'T2',tc:'#D9D9D9',r:'dust',ra:5,tm:14,u:50},
+  {n:'Coal',i:'🖤',t:'T2',tc:'#666',r:'dust',ra:8,tm:20,u:120},
+  {n:'Iron',i:'🔩',t:'T3',tc:'#B87333',r:'ore',ra:1,tm:30,u:250},
+  {n:'Copper',i:'🟠',t:'T3',tc:'#DA8A67',r:'ore',ra:2,tm:45,u:500},
+  {n:'Silver',i:'⚪',t:'T3',tc:'#C0C0C0',r:'ore',ra:3,tm:65,u:900},
+  {n:'Gold',i:'🥇',t:'T3',tc:'#FFD700',r:'ore',ra:5,tm:90,u:1500},
+  {n:'Quartz',i:'💠',t:'T4',tc:'#b0d8ff',r:'ore',ra:8,tm:130,u:2500},
+  {n:'Amethyst',i:'💜',t:'T4',tc:'#9B59B6',r:'gem',ra:1,tm:180,u:4000},
+  {n:'Sapphire',i:'🔷',t:'T4',tc:'#2980B9',r:'gem',ra:2,tm:250,u:7000},
+  {n:'Ruby',i:'🔴',t:'T5',tc:'#E74C3C',r:'gem',ra:3,tm:350,u:12000},
+  {n:'Emerald',i:'💚',t:'T5',tc:'#27AE60',r:'gem',ra:5,tm:500,u:20000},
+  {n:'Diamond',i:'💎',t:'T5',tc:'#76D7EA',r:'gem',ra:8,tm:720,u:35000},
+  {n:'Black Opal',i:'🌑',t:'T6',tc:'#8800ff',r:'gem',ra:12,tm:1000,u:55000},
+  {n:'Alexandrite',i:'🟣',t:'T6',tc:'#bf00ff',r:'gem',ra:18,tm:1400,u:90000},
+  {n:'Red Beryl',i:'❤️',t:'T6',tc:'#ff3333',r:'gem',ra:25,tm:2000,u:140000},
+  {n:'Painite',i:'🔮',t:'T7',tc:'#ff69b4',r:'cosmic',ra:1,tm:3000,u:220000},
+  {n:'Cosmic Gem',i:'🌌',t:'T7',tc:'#00eaff',r:'cosmic',ra:3,tm:5400,u:450000},
+];
+const SLOTS=[
+  {id:'pickaxe',lbl:'Pickaxe',i:'⛏️',eff:'Reduces mining cooldown'},
+  {id:'shirt',lbl:'Shirt',i:'👕',eff:'Boosts resource yield'},
+  {id:'helmet',lbl:'Helmet',i:'⛑️',eff:'XP & quest bonuses'},
+  {id:'gloves',lbl:'Gloves',i:'🧤',eff:'Reduces forge time'},
+  {id:'boots',lbl:'Boots',i:'👢',eff:'Reduces marketplace tax'},
+  {id:'accessory',lbl:'Accessory',i:'💍',eff:'Chapter special effect'},
+];
+const RECIPES=[
+  {n:'Iron Pickaxe',i:'⛏️',cost:{dust:50,ore:10},mnrl:0.5,cat:'Gear'},
+  {n:'Copper Vest',i:'👕',cost:{dust:80,ore:15},mnrl:0.8,cat:'Gear'},
+  {n:'Quartz Lens',i:'🔭',cost:{ore:30,gem:2},mnrl:2.0,cat:'Tool'},
+  {n:'Gem Shard Axe',i:'🪓',cost:{gem:5,ore:20},mnrl:5.0,cat:'Gear'},
+  {n:'Silver Ingot',i:'🥈',cost:{dust:200,ore:40},mnrl:1.5,cat:'Material'},
+  {n:'Cosmic Ingot',i:'🌌',cost:{gem:10,cosmic:1},mnrl:20.0,cat:'Rare'},
+];
+const LISTINGS=[
+  {n:'Iron Pickaxe',i:'⛏️',s:'Miner_042',p:0.45,type:'crafted'},
+  {n:'Ore Shards ×20',i:'🔩',s:'GemHunter_99',p:0.8,type:'resource'},
+  {n:'Copper Vest',i:'👕',s:'DeepDigger',p:1.2,type:'crafted'},
+  {n:'Gem Fragments ×5',i:'💎',s:'CrystalKing',p:3.5,type:'resource'},
+  {n:'Quartz Lens [Tool]',i:'🔭',s:'VaultMiner',p:6.5,type:'crafted'},
+  {n:'Silver Ingot',i:'🥈',s:'IronFist_21',p:2.0,type:'material'},
+];
+const BOOSTS=[
+  {n:'Mining Boost',i:'⚡',d:'Reduces all cooldowns by 50% for 1 hour',p:'50 ⭐'},
+  {n:'Resource Bundle',i:'📦',d:'Instant: Dust ×200 + Ore shards ×10',p:'30 ⭐'},
+  {n:'Extra Quest Slot',i:'📋',d:'+1 permanent active quest slot',p:'100 ⭐'},
+  {n:'Inventory Expand',i:'🗃️',d:'+20 item storage slots (permanent)',p:'80 ⭐'},
+  {n:'Lava Pickaxe Skin',i:'🌋',d:'Cosmetic for your Miner — no game effect',p:'200 ⭐'},
+  {n:'Timer Skip ×1',i:'⏩',d:'Skip the cooldown of one mineral right now',p:'10 ⭐'},
+  {n:'XP Booster',i:'📈',d:'Double XP from all sources for 3 hours',p:'40 ⭐'},
+];
+const NFTS=[
+  {n:'Iron Pickaxe NFT [Common]',i:'⛏️',sup:'487/500',c:'Ore ×50 + Dust ×200',eff:'−8% cooldown'},
+  {n:'Coal Vest NFT [Common]',i:'👕',sup:'312/500',c:'Ore ×30 + Dust ×300',eff:'+10% yield'},
+  {n:'Quartz Pick NFT [Rare]',i:'⛏️',sup:'89/200',c:'Ore ×150 + Gem ×5',eff:'−18% cooldown'},
+  {n:'Silver Shirt NFT [Rare]',i:'👕',sup:'61/200',c:'Ore ×100 + Gem ×8',eff:'+22% yield'},
+  {n:'Diamond Axe NFT [Legendary]',i:'💎',sup:'12/50',c:'Gem ×50 + Cosmic ×2',eff:'−35% cooldown'},
+];
+const QUESTS_TPL=[
+  {n:'First Strike',i:'⛏️',d:'Mine Dirt 10 times',goal:10,reward:0.1,rstr:'0.1 $MNRL',type:'mine_dirt'},
+  {n:'Dust Collector',i:'🟤',d:'Collect 100 Dust total',goal:100,reward:0.2,rstr:'0.2 $MNRL',type:'res_dust'},
+  {n:'Iron Will',i:'🔩',d:'Unlock the Iron mineral',goal:1,reward:0.5,rstr:'0.5 $MNRL + Blueprint',type:'unlock_iron'},
+  {n:'Market Debut',i:'🛒',d:'Complete 1 marketplace trade',goal:1,reward:0.3,rstr:'0.3 $MNRL',type:'trade'},
+  {n:'The Forgemaster',i:'⚒️',d:'Craft any item in the Forge',goal:1,reward:1.0,rstr:'1.0 $MNRL',type:'forge'},
+  {n:'Ore Baron',i:'🔩',d:'Collect 50 Ore shards',goal:50,reward:1.5,rstr:'1.5 $MNRL',type:'res_ore'},
+];
+
+let G={mnrl:0,dust:0,ore:0,gem:0,cosmic:0,pool:0,timers:{},mined:{},trades:0,forges:0,era:0,quests:null};
+try{const s=JSON.parse(localStorage.getItem('gs3')||'{}');Object.assign(G,s)}catch(e){}
+if(!G.quests)G.quests=QUESTS_TPL.map(q=>({...q,prog:0,claimed:false}));
+
+const save=()=>{try{localStorage.setItem('gs3',JSON.stringify(G))}catch(e){}};
+const fmt=n=>{if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';if(n>=1)return n.toFixed(3);return n.toFixed(3)};
+const fi=n=>Math.floor(n);
+
+function updHUD(){
+  document.getElementById('hud-mnrl').textContent=fmt(G.mnrl)+' $MNRL';
+  document.getElementById('r-dust').textContent=fi(G.dust);
+  document.getElementById('r-ore').textContent=fi(G.ore);
+  document.getElementById('r-gem').textContent=fi(G.gem);
+  document.getElementById('r-cos').textContent=fi(G.cosmic);
+  const cc=document.getElementById('cos-count');if(cc)cc.textContent=fi(G.cosmic);
+  const pv=document.getElementById('pool-val');if(pv)pv.textContent=fmt(G.pool);
+  const pb=document.getElementById('prestige-btn');
+  if(pb){
+    if(G.cosmic>=500){pb.classList.add('unlocked');pb.textContent='✨ PRESTIGE TO IRON ERA — 500 COSMIC ESSENCE';}
+    else{pb.classList.remove('unlocked');pb.textContent='🔒 PRESTIGE TO IRON ERA — NEED 500 COSMIC ESSENCE';}
+  }
+}
+
+let _toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function float(el,txt,col){
+  const r=el.getBoundingClientRect();
+  const f=document.createElement('div');f.className='fl';f.textContent=txt;f.style.color=col||'#4fffb0';
+  f.style.left=(r.left+r.width/2-24)+'px';f.style.top=(r.top-10)+'px';
+  document.body.appendChild(f);setTimeout(()=>f.remove(),900);
+}
+
+function score(){return G.dust+G.ore*10+G.gem*100+G.cosmic*1000;}
+
+function buildMine(){
+  const sc=document.getElementById('mine-scroll');sc.innerHTML='';
+  const now=Date.now();const pts=score();
+  MINS.forEach((m,i)=>{
+    const unlocked=pts>=m.u||i===0;
+    const rem=(G.timers[i]||0)-now;
+    const ready=rem<=0;
+    const div=document.createElement('div');
+    div.className='mrow'+(ready&&unlocked?' ready':'')+(unlocked?'':' mlocked');
+    const ri=m.r==='dust'?'🟤':m.r==='ore'?'🔩':m.r==='gem'?'💎':'🌌';
+    const rn=m.r==='dust'?'Dust':m.r==='ore'?'Ore shard':m.r==='gem'?'Gem frag':'Cosmic Ess.';
+    let right='';
+    if(!unlocked){right=`<div class="unlk">🔒 ${fmt(m.u)} pts</div>`;}
+    else if(!ready){
+      const s=Math.ceil(rem/1000);
+      const d=s<60?s+'s':(Math.floor(s/60)+'m '+(s%60)+'s');
+      right=`<div style="text-align:right"><div class="tmr" id="t${i}">${d}</div><button class="mbtn cool">Cooling...</button></div>`;
+    }else{
+      right=`<button class="mbtn" onclick="doMine(${i},this)">Mine +${m.ra} ${ri}</button>`;
+    }
+    div.innerHTML=`<div class="micon">${m.i}</div>
+<div class="minfo">
+  <div class="mname">${m.n}</div>
+  <div class="mres">+${m.ra} ${rn} per mine · ${m.tm}s cooldown</div>
+  <span class="mtier" style="background:${m.tc}22;color:${m.tc};border:1px solid ${m.tc}44">${m.t}</span>
+</div>
+<div style="text-align:right;flex-shrink:0">${right}</div>`;
+    sc.appendChild(div);
+  });
+}
+
+window.doMine=function(i,btn){
+  const m=MINS[i];
+  G[m.r]=(G[m.r]||0)+m.ra;
+  G.mined[i]=(G.mined[i]||0)+1;
+  G.timers[i]=Date.now()+m.tm*1000;
+  float(btn,`+${m.ra} ${m.r==='dust'?'🟤':m.r==='ore'?'🔩':m.r==='gem'?'💎':'🌌'}`,'#4fffb0');
+  updQuests();updHUD();save();buildMine();
+};
+
+function buildMiner(){
+  document.getElementById('slots-grid').innerHTML=SLOTS.map(s=>`
+<div class="scard" onclick="toast('⛏️ Equip NFTs from the Shop → Mint Station')">
+  <div class="scard-top"><span class="scard-icon">${s.i}</span><span class="scard-lbl">${s.lbl.toUpperCase()}</span></div>
+  <div class="scard-empty">Empty — mint an NFT</div>
+  <div class="scard-eff">${s.eff}</div>
+</div>`).join('');
+}
+
+function buildForge(){
+  document.getElementById('forge-list').innerHTML=RECIPES.map((r,i)=>{
+    const ok=Object.entries(r.cost).every(([k,v])=>(G[k]||0)>=v);
+    const cs=Object.entries(r.cost).map(([k,v])=>`${v}${k==='dust'?'🟤':k==='ore'?'🔩':k==='gem'?'💎':'🌌'}`).join(' + ');
+    return`<div class="recipe-row">
+  <span class="r-icon">${r.i}</span>
+  <div class="r-info">
+    <div class="r-name">${r.n} <span style="font-size:10px;color:var(--dim);font-weight:400">[${r.cat}]</span></div>
+    <div class="r-cost">${cs} → <span style="color:var(--gold)">${r.mnrl} $MNRL</span></div>
+  </div>
+  <button class="fbtn" ${ok?'':'disabled'} onclick="doForge(${i},this)">${ok?'Forge':'Need more'}</button>
+</div>`;
+  }).join('');
+}
+
+window.doForge=function(i,btn){
+  const r=RECIPES[i];
+  if(!Object.entries(r.cost).every(([k,v])=>(G[k]||0)>=v))return;
+  Object.entries(r.cost).forEach(([k,v])=>G[k]-=v);
+  G.mnrl+=r.mnrl;G.forges++;
+  float(btn,`+${r.mnrl} $MNRL`,'#f0c040');
+  toast(`⚒️ Forged ${r.n}! +${r.mnrl} $MNRL`);
+  updQuests();updHUD();save();buildForge();
+};
+
+function buildMarket(){
+  document.getElementById('mkt-list').innerHTML=LISTINGS.map((l,i)=>`
+<div class="mkt-row">
+  <span style="font-size:20px;width:28px;text-align:center;flex-shrink:0">${l.i}</span>
+  <div class="mkt-info">
+    <div class="mkt-name">${l.n}</div>
+    <div class="mkt-seller">by ${l.s} · 5% tax applies</div>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div class="mkt-price">${l.p} $MNRL</div>
+    <button class="buybtn" onclick="doBuy(${i},this)">Buy</button>
+  </div>
+</div>`).join('');
+}
+
+window.doBuy=function(i,btn){
+  const l=LISTINGS[i];
+  if(G.mnrl<l.p){toast('❌ Not enough $MNRL to buy this!');return;}
+  const tax=l.p*0.05;G.mnrl-=l.p;G.pool+=tax;G.trades++;
+  float(btn,`−${l.p} $MNRL`,'#e94560');
+  toast(`🛒 Bought ${l.n}! Pool +${tax.toFixed(3)} $MNRL`);
+  updQuests();updHUD();save();
+};
+
+function buildShop(){
+  document.getElementById('boost-list').innerHTML=BOOSTS.map(b=>`
+<div class="shop-row">
+  <span class="sh-icon">${b.i}</span>
+  <div class="sh-info"><div class="sh-name">${b.n}</div><div class="sh-desc">${b.d}</div></div>
+  <div style="text-align:right;flex-shrink:0">
+    <div class="sh-price">${b.p}</div>
+    <button class="starbtn" onclick="toast('⭐ Telegram Stars payment — coming soon!')">Buy</button>
+  </div>
+</div>`).join('');
+
+  document.getElementById('nft-list').innerHTML=NFTS.map(n=>`
+<div class="nft-row">
+  <span style="font-size:24px;width:32px;text-align:center;flex-shrink:0">${n.i}</span>
+  <div class="nft-info">
+    <div class="nft-name">${n.n}</div>
+    <div class="nft-cost">${n.c}</div>
+    <div style="font-size:10px;color:var(--mnrl);margin-top:2px">${n.eff}</div>
+    <div class="nft-sup">Supply: ${n.sup}</div>
+  </div>
+  <button class="mintbtn" onclick="toast('🔨 Minting ${n.n} — TON wallet required')">Mint</button>
+</div>`).join('');
+}
+
+function buildQuests(){
+  document.getElementById('quest-list').innerHTML=G.quests.map((q,qi)=>{
+    const pct=Math.min(100,q.prog/q.goal*100);
+    const done=q.prog>=q.goal;
+    return`<div class="qrow">
+  <span class="q-icon">${q.i}</span>
+  <div class="q-info">
+    <div class="q-name">${q.n}${done?' ✓':''}</div>
+    <div class="q-desc">${q.d}</div>
+    <div class="q-bar-bg"><div class="q-bar-fill" style="width:${pct}%"></div></div>
+    <div class="q-prog">${q.prog} / ${q.goal}</div>
+  </div>
+  <div class="q-reward">
+    <div>${q.rstr}</div>
+    ${done&&!q.claimed?`<button class="claimbtn" onclick="claimQ(${qi},this)">Claim</button>`:''}
+    ${q.claimed?`<div style="font-size:10px;color:var(--dim);margin-top:4px">Claimed ✓</div>`:''}
+  </div>
+</div>`;}).join('');
+}
+
+window.claimQ=function(i,btn){
+  const q=G.quests[i];if(q.claimed||q.prog<q.goal)return;
+  q.claimed=true;G.mnrl+=q.reward;
+  float(btn,'+'+q.reward+' $MNRL','#f0c040');
+  toast(`🎉 Quest complete: ${q.n}!`);
+  updHUD();save();buildQuests();
+};
+
+function updQuests(){
+  G.quests.forEach(q=>{
+    if(q.claimed)return;
+    if(q.type==='mine_dirt')q.prog=Math.min(q.goal,G.mined[0]||0);
+    else if(q.type==='res_dust')q.prog=Math.min(q.goal,fi(G.dust));
+    else if(q.type==='res_ore')q.prog=Math.min(q.goal,fi(G.ore));
+    else if(q.type==='unlock_iron')q.prog=score()>=(MINS[5].u)?1:0;
+    else if(q.type==='trade')q.prog=Math.min(q.goal,G.trades);
+    else if(q.type==='forge')q.prog=Math.min(q.goal,G.forges);
+  });
+  if(document.querySelector('#screen-quests.active'))buildQuests();
+}
+
+window.doPrestige=function(){
+  if(G.cosmic<500){toast('❌ Need 500 Cosmic Essence to prestige!');return;}
+  G.cosmic-=500;G.mnrl+=500;
+  G.dust=0;G.ore=0;G.gem=0;G.timers={};G.mined={};G.forges=0;G.era++;
+  G.quests=QUESTS_TPL.map(q=>({...q,prog:0,claimed:false}));
+  document.getElementById('era-badge').textContent='🔥 IRON ERA';
+  toast('✨ Prestiged to Iron Era! +500 $MNRL earned!');
+  updHUD();save();buildMine();buildQuests();buildForge();
+};
+
+window.go=function(name,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='forge')buildForge();
+  if(name==='market')buildMarket();
+  if(name==='quests')buildQuests();
+  updHUD();
+};
+
+let last=Date.now();
+function loop(){
+  const now=Date.now(),dt=now-last;last=now;
+  if(document.querySelector('#screen-mine.active')){
+    let needRebuild=false;
+    MINS.forEach((m,i)=>{
+      const rem=(G.timers[i]||0)-now;
+      const el=document.getElementById('t'+i);
+      if(el){
+        if(rem>0){const s=Math.ceil(rem/1000);el.textContent=s<60?s+'s':Math.floor(s/60)+'m '+(s%60)+'s';}
+        else needRebuild=true;
+      }
+    });
+    if(needRebuild)buildMine();
+  }
+  if(Math.floor(now/10000)!==Math.floor((now-dt)/10000))save();
+  requestAnimationFrame(loop);
+}
+
+buildMine();buildMiner();buildForge();buildMarket();buildShop();buildQuests();
+updHUD();loop();
+</script>
+</body>
+</html>
