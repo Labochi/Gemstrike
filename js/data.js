@@ -35,13 +35,76 @@ const ERAS=[
 ];
 
 const FORGE_RECIPES=[
-  {n:'Dust Brick',  i:'🧱',tier:'Common',  tc:'#9E9E9E',mats:{Dust:30},reward:3},
-  {n:'Stone Tool',  i:'🔨',tier:'Common',  tc:'#9E9E9E',mats:{Stone:20,Coal:10},reward:8},
-  {n:'Iron Blade',  i:'🗡️',tier:'Rare',   tc:'#378ADD',mats:{'Iron Ore':15,Coal:20},reward:20},
-  {n:'Gold Ring',   i:'💍',tier:'Epic',    tc:'#7F77DD',mats:{Gold:10,Silver:15},reward:60},
-  {n:'Crystal Lens',i:'🔭',tier:'Legendary',tc:'#BA7517',mats:{Diamond:5,Sapphire:8},reward:150},
-  {n:'Cosmic Shard',i:'⚡',tier:'Cosmic',  tc:'#00eaff',mats:{Painite:3,'Cosmic Essence':1},reward:500},
+  // ── Era 0 · Stone Era ──────────────────────────────────────────
+  {n:'Dust Brick',        i:'🧱',tier:'Common',  tc:'#9E9E9E',era:0,mats:{Dust:30},                                             reward:5,   building:'Basic Hut'},
+  {n:'Stone Wall',        i:'🏚️',tier:'Common',  tc:'#9E9E9E',era:0,mats:{Stone:25,Dust:15},                                    reward:10,  building:'Stone Fence'},
+  {n:'Sand Glass',        i:'🪟',tier:'Common',  tc:'#9E9E9E',era:0,mats:{Sand:20,Coal:5},                                      reward:14,  building:'Window Pane'},
+  {n:'Limestone Slab',    i:'⬜',tier:'Common',  tc:'#9E9E9E',era:0,mats:{Limestone:15,Stone:10},                               reward:18,  building:'Cobblestone Path'},
+  {n:'Coal Furnace',      i:'🔥',tier:'Common',  tc:'#9E9E9E',era:0,mats:{Coal:20,Stone:30},                                    reward:25,  building:'Smelting Furnace'},
+  // ── Era 1 · Iron Era ───────────────────────────────────────────
+  {n:'Iron Ingot',        i:'🔩',tier:'Rare',    tc:'#378ADD',era:1,mats:{'Iron Ore':20,Coal:15},                               reward:40,  building:'Iron Gate'},
+  {n:'Copper Pipe',       i:'🟠',tier:'Rare',    tc:'#378ADD',era:1,mats:{Copper:15,Coal:10},                                   reward:48,  building:'Water Well'},
+  {n:'Stone Workshop',    i:'🔨',tier:'Rare',    tc:'#378ADD',era:1,mats:{Stone:40,Coal:20,Dust:30},                            reward:55,  building:'Craftsman Workshop'},
+  {n:'Silver Bar',        i:'⚪',tier:'Rare',    tc:'#378ADD',era:1,mats:{Silver:10,Gold:5},                                    reward:70,  building:'Coin Mint'},
+  {n:'Gold Vault Lock',   i:'💛',tier:'Rare',    tc:'#378ADD',era:1,mats:{Gold:15,'Iron Ore':20},                               reward:85,  building:'Treasury'},
+  {n:'Quartz Clock',      i:'🔮',tier:'Rare',    tc:'#378ADD',era:1,mats:{Quartz:8,Silver:10},                                  reward:100, building:'Clocktower'},
+  {n:'Iron Pickaxe',      i:'⛏️',tier:'Rare',    tc:'#378ADD',era:1,mats:{'Iron Ore':25,Coal:20,Stone:15},                     reward:75,  building:'Mine Shaft'},
+  {n:'Bronze Alloy Plate',i:'🟧',tier:'Rare',    tc:'#378ADD',era:1,mats:{Copper:20,'Iron Ore':10,Coal:15},                    reward:90,  building:'Forge Upgrade'},
+  // ── Era 2 · Crystal Era ────────────────────────────────────────
+  {n:'Crystal Prism',     i:'🔷',tier:'Epic',    tc:'#7F77DD',era:2,mats:{Sapphire:5,Quartz:10},                               reward:150, building:'Observatory'},
+  {n:'Forged Anvil',      i:'⚒️',tier:'Epic',    tc:'#7F77DD',era:2,mats:{'Iron Ore':30,Coal:25,Gold:5},                      reward:170, building:'Grand Blacksmith'},
+  {n:'Amethyst Shrine',   i:'💜',tier:'Epic',    tc:'#7F77DD',era:2,mats:{Amethyst:10,Gold:8},                                 reward:200, building:'Magic Temple'},
+  {n:'Ruby Hearth',       i:'🔴',tier:'Epic',    tc:'#7F77DD',era:2,mats:{Ruby:8,Coal:15,Gold:5},                              reward:230, building:'Grand Hall'},
+  {n:'Emerald Garden Wall',i:'💚',tier:'Epic',   tc:'#7F77DD',era:2,mats:{Emerald:6,Sand:20,Limestone:10},                    reward:250, building:'Crystal Garden'},
+  {n:'Diamond Drill Bit', i:'💎',tier:'Epic',    tc:'#7F77DD',era:2,mats:{Diamond:5,'Iron Ore':20,Quartz:8},                  reward:300, building:'Deep Mine Shaft'},
+  {n:'Crystal Wand',      i:'🪄',tier:'Epic',    tc:'#7F77DD',era:2,mats:{Sapphire:8,Ruby:5,Amethyst:8},                      reward:350, building:'Mage Tower'},
+  {n:'Gem Throne',        i:'👑',tier:'Epic',    tc:'#7F77DD',era:2,mats:{Diamond:8,Ruby:6,Emerald:6,Sapphire:6},             reward:500, building:'Royal Palace'},
+  // ── Era 3 · Cosmic Era ─────────────────────────────────────────
+  {n:'Opal Shield',       i:'🛡️',tier:'Legendary',tc:'#BA7517',era:3,mats:{'Black Opal':5,Diamond:3,'Iron Ore':10},           reward:650, building:'Fortress Wall'},
+  {n:'Alexandrite Mirror',i:'🟣',tier:'Legendary',tc:'#BA7517',era:3,mats:{Alexandrite:5,Diamond:4,Gold:10},                  reward:750, building:'Astral Observatory'},
+  {n:'Beryl Gauntlet',    i:'❤️',tier:'Legendary',tc:'#BA7517',era:3,mats:{'Red Beryl':4,Diamond:3,'Iron Ore':20},            reward:850, building:"Champion's Hall"},
+  {n:'Crystal Dome',      i:'🏛️',tier:'Legendary',tc:'#BA7517',era:3,mats:{Diamond:10,Quartz:15,Sapphire:8},                 reward:950, building:'Grand Cathedral'},
+  {n:'Painite Staff',     i:'🌟',tier:'Cosmic',  tc:'#00eaff',era:3,mats:{Painite:5,'Red Beryl':3,'Black Opal':4},           reward:1400, building:"Wizard's Spire"},
+  {n:'Cosmic Engine',     i:'🌌',tier:'Cosmic',  tc:'#00eaff',era:3,mats:{'Cosmic Essence':3,Painite:2,Alexandrite:5},       reward:2200, building:'Space Port'},
+  {n:'Nebula Beacon',     i:'🌠',tier:'Cosmic',  tc:'#00eaff',era:3,mats:{'Cosmic Essence':5,Alexandrite:4,'Black Opal':3},  reward:2800, building:'Astral Tower'},
+  {n:'Star Forge Hammer', i:'⭐',tier:'Cosmic',  tc:'#00eaff',era:3,mats:{'Cosmic Essence':8,Painite:5,'Red Beryl':6},       reward:5000, building:'Legendary Forge'},
 ];
+
+const EMPIRE_BUILDINGS={
+  // Settlement
+  'Basic Hut':          {zone:'Settlement',         i:'🏠',benefit:'+1 queued mining slot',         buildCost:{Stone:20,Dust:15}},
+  'Stone Fence':        {zone:'Settlement',         i:'🧱',benefit:'−2% energy cost on all mines',  buildCost:{Stone:30,Dust:20}},
+  'Window Pane':        {zone:'Settlement',         i:'🪟',benefit:'+5 free Dirt mines/day',        buildCost:{Sand:15,Limestone:5}},
+  'Cobblestone Path':   {zone:'Settlement',         i:'🛤️',benefit:'+3% sell price bonus',          buildCost:{Limestone:20,Dust:10}},
+  'Smelting Furnace':   {zone:'Settlement',         i:'🔥',benefit:'Coal cooldown −10%',            buildCost:{Coal:30,Stone:20}},
+  // Industrial District
+  'Iron Gate':          {zone:'Industrial District',i:'🚪',benefit:'Unlocks market improvements',   buildCost:{'Iron Ore':30,Stone:20}},
+  'Water Well':         {zone:'Industrial District',i:'🪣',benefit:'+5% sell price for ores',       buildCost:{Copper:20,Stone:15}},
+  'Craftsman Workshop': {zone:'Industrial District',i:'🔨',benefit:'+10% forge coin rewards',       buildCost:{Stone:50,Coal:25}},
+  'Coin Mint':          {zone:'Industrial District',i:'🏦',benefit:'+5 bonus coins per conversion', buildCost:{Silver:15,Gold:8}},
+  'Treasury':           {zone:'Industrial District',i:'💰',benefit:'Coin overflow protection',      buildCost:{Gold:20,'Iron Ore':25}},
+  'Clocktower':         {zone:'Industrial District',i:'🕰️',benefit:'Cooldown timers shown in HUD', buildCost:{Quartz:10,Stone:30}},
+  'Mine Shaft':         {zone:'Industrial District',i:'⛏️',benefit:'+1 active mining slot',         buildCost:{'Iron Ore':30,Coal:30}},
+  'Forge Upgrade':      {zone:'Industrial District',i:'⚒️',benefit:'Unlocks Era 2 forge recipes',  buildCost:{Copper:25,'Iron Ore':20}},
+  // Crystal Quarter
+  'Observatory':        {zone:'Crystal Quarter',    i:'🔭',benefit:'Reveals rare mineral odds',     buildCost:{Sapphire:8,Quartz:15}},
+  'Grand Blacksmith':   {zone:'Crystal Quarter',    i:'🗡️',benefit:'+15% forge coin rewards',       buildCost:{'Iron Ore':40,Coal:30}},
+  'Magic Temple':       {zone:'Crystal Quarter',    i:'💜',benefit:'+5% $MNRL per mine',            buildCost:{Amethyst:15,Gold:10}},
+  'Grand Hall':         {zone:'Crystal Quarter',    i:'🏰',benefit:'+2 mining queue slots',         buildCost:{Ruby:10,Gold:8}},
+  'Crystal Garden':     {zone:'Crystal Quarter',    i:'🌿',benefit:'+10% sell price for gems',      buildCost:{Emerald:8,Sand:25}},
+  'Deep Mine Shaft':    {zone:'Crystal Quarter',    i:'💎',benefit:'+1 active mining slot',         buildCost:{Diamond:6,'Iron Ore':25}},
+  'Mage Tower':         {zone:'Crystal Quarter',    i:'🪄',benefit:'Unlocks Era 3 forge recipes',  buildCost:{Sapphire:10,Ruby:8}},
+  'Royal Palace':       {zone:'Crystal Quarter',    i:'👑',benefit:'+20% all coin gains',           buildCost:{Diamond:10,Ruby:8,Emerald:8}},
+  // Cosmic Citadel
+  'Fortress Wall':      {zone:'Cosmic Citadel',     i:'🛡️',benefit:'Reduces market tax to 3%',     buildCost:{'Black Opal':6,Diamond:4}},
+  'Astral Observatory': {zone:'Cosmic Citadel',     i:'🌌',benefit:'+10% $MNRL yield',             buildCost:{Alexandrite:6,Gold:12}},
+  "Champion's Hall":    {zone:'Cosmic Citadel',     i:'🏆',benefit:'+3 active mining slots',       buildCost:{'Red Beryl':5,'Iron Ore':25}},
+  'Grand Cathedral':    {zone:'Cosmic Citadel',     i:'⛪',benefit:'+25% all coin gains',          buildCost:{Diamond:12,Quartz:20}},
+  "Wizard's Spire":     {zone:'Cosmic Citadel',     i:'🌟',benefit:'+15% $MNRL yield',             buildCost:{Painite:6,'Red Beryl':4}},
+  'Space Port':         {zone:'Cosmic Citadel',     i:'🚀',benefit:'Unlocks Cosmic forge recipes', buildCost:{'Cosmic Essence':4,Painite:3}},
+  'Astral Tower':       {zone:'Cosmic Citadel',     i:'🌠',benefit:'+5% energy efficiency',        buildCost:{'Cosmic Essence':6,Alexandrite:5}},
+  'Legendary Forge':    {zone:'Cosmic Citadel',     i:'⭐',benefit:'Max forge rewards doubled',    buildCost:{'Cosmic Essence':10,Painite:6}},
+};
 
 const QUESTS=[
   {n:'First Strike',desc:'Start mining 5 times',  goal:5,  key:'starts',reward:5},
@@ -87,5 +150,5 @@ let G={
   gear:{pickaxe:null,shirt:null,helmet:null,gloves:null,boots:null,accessory:null},
   quests:{},questClaimed:[],
   starts:0,forges:0,dirtMines:0,dirtReset:0,
-  passPremium:false,_id:0,
+  crafted:{},empire:[],empireLayout:[],passPremium:false,_id:0,
 };

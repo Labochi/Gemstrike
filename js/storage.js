@@ -9,6 +9,9 @@ function loadGame(){
       if(!G.queue)G.queue=[];
       if(!G.ready)G.ready=[];
       if(!G.gear)G.gear={pickaxe:null,shirt:null,helmet:null,gloves:null,boots:null,accessory:null};
+      if(!G.crafted)G.crafted={};
+      if(!Array.isArray(G.empire))G.empire=[];
+      if(!Array.isArray(G.empireLayout))G.empireLayout=[];
       const now=Date.now();
       const still=[];
       (G.slots||[]).forEach(function(s){

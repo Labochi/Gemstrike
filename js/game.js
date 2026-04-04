@@ -108,3 +108,12 @@ function startLoadingScreen(onDone){
     bar.style.width=progress+'%';
   },80);
 }
+
+// ── DEV HELPER ─────────────────────────────────────────────────────────────
+window.devFill=function(){
+  G.coins=999999;G.mnrl=9999;G.nrg=9999;G.era=3;
+  MINERALS.forEach(function(m){G.res[m.res]=500;});
+  FORGE_RECIPES.forEach(function(r){G.crafted[r.n]=10;});
+  saveGame();updateHUD();renderScroll();
+  showToast('🛠️ Dev fill applied!','#a855f7');
+};
